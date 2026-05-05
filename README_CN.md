@@ -11,17 +11,28 @@
 
 ## 如何使用
 
-### 1. 环境准备
+### 快速开始（推荐）
+
+你可以直接使用 `uvx` 运行服务器 — 无需克隆、安装或配置：
+
+```bash
+uvx --from git+https://github.com/ptbsare/sogou-weixin-mcp-server.git sogou-weixin-mcp-server
+```
+
+一条命令即可下载并运行最新版本。
+
+### 1. 环境准备（本地开发）
 
 确保您的系统安装了 Python 3.10 或更高版本。
 
 推荐使用 `uv` 进行依赖管理：
 
 ```bash
-# 安装 uv (如果尚未安装)
+# 安装 uv（如果尚未安装）
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# 进入项目目录
+# 克隆仓库
+git clone https://github.com/ptbsare/sogou-weixin-mcp-server.git
 cd sogou-weixin-mcp-server
 
 # 使用 uv 安装依赖
@@ -33,14 +44,20 @@ uv sync
 您可以将本项目作为 MCP 服务器运行，以便其他 AI 代理或系统通过 MCP 协议调用 `search_wechat_articles` 工具。
 
 ```bash
+# 通过 uv 运行（本地目录）
+uv run sogou-weixin-mcp-server
+
+# 或直接运行脚本
 uv run server.py
 ```
 
-服务器启动后，它将监听 MCP 客户端的请求。
+服务器启动后，将通过 stdio 监听 MCP 客户端的请求。
 
 ### 3. Claude MCP 服务器配置示例
 
 以下是一个 `mcp_server.json` 配置文件示例，用于将此 MCP 服务器连接到 Claude：
+
+#### 方案 A：使用 uvx（无需本地克隆）
 
 ```json
 {
@@ -48,28 +65,40 @@ uv run server.py
     {
       "name": "sogou-wechat-search",
       "type": "stdio",
-      "command": ["uv", "--directory", "/space/sogou-weixin-mcp-server/", "run", "server.py"],
-      "tools": [
-        {
-          "name": "search_wechat_articles",
-          "description": "使用Miku_spider通过搜狗微信搜索文章。",
-          "input_schema": {
-            "type": "object",
-            "properties": {
-              "query": {
-                "type": "string",
-                "description": "搜索关键词。"
-              },
-              "top_num": {
-                "type": "integer",
-                "description": "返回文章的最大数量，默认为18篇。",
-                "default": 18
-              }
-            },
-            "required": ["query"]
-          }
-        }
-      ]
+      "command": ["uvx", "--from", "git+https://github.com/ptbsare/sogou-weixin-mcp-server.git", "sogou-weixin-mcp-server"]
     }
   ]
 }
+```
+
+#### 方案 B：使用本地目录
+
+```json
+{
+  "mcp_servers": [
+    {
+      "name": "sogou-wechat-search",
+      "type": "stdio",
+      "command": ["uv", "--directory", "/path/to/sogou-weixin-mcp-server/", "run", "server.py"]
+    }
+  ]
+}
+```
+
+### 4. 可用工具
+
+#### `search_wechat_articles`
+
+通过搜狗微信搜索文章。
+
+| 参数 | 类型 | 必填 | 默认值 | 描述 |
+|------|------|------|--------|------|
+| `query` | string | 是 | — | 搜索关键词 |
+| `top_num` | integer | 否 | 18 | 返回文章的最大数量 |
+
+**返回值：** 字典列表，每个字典包含：
+- `title` — 文章标题
+- `snippet` — 文章摘要
+- `url` — 文章链接
+- `source` — 微信公众号名称
+- `date` — 发布日期
