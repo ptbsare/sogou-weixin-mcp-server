@@ -9,6 +9,9 @@ dependencies = [
 ]
 requires-python = ">=3.10"
 
+[project.scripts]
+sogou-weixin-mcp-server = "server:main"
+
 [build-system]
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
